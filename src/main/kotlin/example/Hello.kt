@@ -2,28 +2,21 @@ package example
 
 import java.sql.DriverManager
 
-private val DBNAME = "mydb"
-
 fun main(args: Array<String>) {
-    Class.forName("org.h2.Driver")
-
-    val conn = DriverManager.getConnection("jdbc:h2:mem:$DBNAME", "sa", "sa") // (2)
-
+    Class.forName("org.postgresql.Driver")
+    val conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/kotlin-jdbc-insert-returning-id-demo", "freewind", "") // (2)
     conn.use {
-
         conn.createStatement().use { stmt ->
             with(stmt) {
-                executeUpdate("create table mytbl(id int primary key, name varchar(255))")
-                executeUpdate("insert into mytbl values(1, 'Hello')")
-                executeUpdate("insert into mytbl values(2, 'World')")
+                executeUpdate("""create table mytbl(id SERIAL primary key, name varchar(255))""");
             }
         }
 
         conn.createStatement().use { stmt ->
-            val rs = stmt.executeQuery("select * from mytbl")
-            while (rs.next()) {
-                println("> " + rs.getString("name"))
-            }
+            val rs = stmt.executeQuery("""insert into mytbl(name) values('Hello') returning id;""")
+            rs.next()
+            val id = rs.getLong("id") // rs.getLong(1)
+            println("generated id: $id")
         }
     }
 
